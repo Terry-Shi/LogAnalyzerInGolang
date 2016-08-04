@@ -11,15 +11,47 @@ import (
 	"sort"
 )
 
-// ref:Golang-文件操作 http://www.nljb.net/default/Golang-%E6%96%87%E4%BB%B6%E6%93%8D%E4%BD%9C/
+/*
+ ref:Golang-文件操作 http://www.nljb.net/default/Golang-%E6%96%87%E4%BB%B6%E6%93%8D%E4%BD%9C/
 
-//OK 1. 函数参数为可变数量
-//OK 2. 文件操作。 a.遍历某目录下所有文件 b. 读取文件内容
-// 3. 利用正则表达式过滤文件
-//OK 4. read gzip file directly
-// 5 错误、异常处理
-// 6 排序 map http://blog.csdn.net/slvher/article/details/44779081
-// 7 best practice: clean code
+OK 1. 函数参数为可变数量
+OK 2. 文件操作。 a.遍历某目录下所有文件 b. 读取文件内容
+ 3. 利用正则表达式过滤文件
+OK 4. read gzip file directly
+ 5 错误、异常处理
+ 6 对map按值排序 http://golanghome.com/post/423
+   https://gist.github.com/ikbear/4038654
+   http://blog.csdn.net/slvher/article/details/44779081
+ 7 best practice: clean code
+*/
+
+// 对map按值排序 (升序)
+type SortByValueMap struct {
+    m map[string]float32
+    s []string
+}
+func (sm *SortByValueMap) Len() int {
+    return len(sm.m)
+}
+func (sm *SortByValueMap) Less(i, j int) bool {
+    return sm.m[sm.s[i]] < sm.m[sm.s[j]]
+}
+func (sm *SortByValueMap) Swap(i, j int) {
+    sm.s[i], sm.s[j] = sm.s[j], sm.s[i]
+}
+func sortedKeys(m map[string]float32) []string {
+    sm := new(SortByValueMap)
+    sm.m = m
+    sm.s = make([]string, len(m))
+    i := 0
+    for key, _ := range m {
+        sm.s[i] = key
+        i++
+    }
+    sort.Sort(sm)
+    return sm.s
+}
+
 
 func main() {
 	ret, err := queryWithDateRange("C:\\WORK\\IDE\\IdeaProjects\\LogAnalyzerInGolang\\logfile", "")
@@ -27,21 +59,36 @@ func main() {
 		fmt.Println(err)
 	} else {
 		fmt.Println(ret)
-		// 根据key排序
-		sorted_keys := make([]string, 0)
-		for k, _ := range ret {
-			sorted_keys = append(sorted_keys, k)
-		}
-		// sort 'string' key in increasing order
-		sort.Strings(sorted_keys)
-		for _, k := range sorted_keys {
-			fmt.Printf("k=%v, v=%v\n", k, ret[k])
-		}
+
+		//// 根据key排序
+		//sorted_keys := make([]string, 0)
+		//for k, _ := range ret {
+		//	sorted_keys = append(sorted_keys, k)
+		//}
+		//// sort 'string' key in increasing order
+		//sort.Strings(sorted_keys)
+		//for _, k := range sorted_keys {
+		//	fmt.Printf("k=%v, v=%v\n", k, ret[k])
+		//}
+
+        // 计算访问量占比
+        var totalReqest int = 0
+        for _, value := range ret {
+            totalReqest = totalReqest + value
+        }
+        frequencyMap := make(map[string]float32)
+        for key, value := range ret {
+            frequencyMap[key] = float32(value)/ float32(totalReqest) * 100
+        }
 
 		// TODO: 自定义数据结构排序, 以map的value从小到大排序
 		// http://www.kancloud.cn/itfanr/go-by-example/81648
 		//实现了sort接口的Len，Less和Swap方法这样我们就可以使用sort包的通用方法Sort
-		sort.Sort()
+        keysAfterSort := sortedKeys(frequencyMap)
+        for _, key := range keysAfterSort {
+            //fmt.Println(key, " ", frequencyMap[key])
+            fmt.Printf("%s %6.4f \n", key, frequencyMap[key])
+        }
 	}
 }
 
@@ -54,7 +101,7 @@ func queryWithDateRange(path string, logdate ...string) (map[string]int, error) 
 
 	files, err := ListDir(path, "gz")
 	if err != nil {
-		return ret
+		return ret, err
 	}
 	for _, fileFullPathName := range files {
 		fmt.Println(fileFullPathName)
@@ -81,7 +128,9 @@ func queryWithDateRange(path string, logdate ...string) (map[string]int, error) 
 						break
 					} else {
 						eprid := GetEprid(line)
-						ret[eprid] = ret[eprid] + 1
+                        if eprid != "" {
+                            ret[eprid] = ret[eprid] + 1
+                        }
 					}
 				}
 			} else {
@@ -90,12 +139,14 @@ func queryWithDateRange(path string, logdate ...string) (map[string]int, error) 
 					line = scanner.Text()
 					//fmt.Printf("%v",line)
 					eprid := GetEprid(line)
-					ret[eprid] = ret[eprid] + 1
+                    if eprid != "" {
+                        ret[eprid] = ret[eprid] + 1
+                    }
 				}
 			}
 		}()
 	}
-	return ret
+	return ret, err
 }
 
 func GetEprid(oneline string) (eprid string) {
