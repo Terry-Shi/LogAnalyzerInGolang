@@ -1,0 +1,14 @@
+<component name="libraryTable">
+  <library name="GOPATH &lt;LogAnalyzerInGolang&gt;">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/../../../GOPATH/src/gopkg.in" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="file://$PROJECT_DIR$/../../../GOPATH/src/gopkg.in" />
+    </SOURCES>
+    <excluded>
+      <root url="file://$PROJECT_DIR$" />
+    </excluded>
+  </library>
+</component>

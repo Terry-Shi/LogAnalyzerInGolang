@@ -86,7 +86,7 @@ func main() {
 		//实现了sort接口的Len，Less和Swap方法这样我们就可以使用sort包的通用方法Sort
         keysAfterSort := sortedKeys(frequencyMap)
         for _, key := range keysAfterSort {
-            //fmt.Println(key, " ", frequencyMap[key])
+            // 格式化 http://gobyexample.everyx.in/string-formatting/
             fmt.Printf("%s %6.4f \n", key, frequencyMap[key])
         }
 	}
